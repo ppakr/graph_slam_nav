@@ -7,29 +7,30 @@ import pandas as pd
 DATA_DIR = "./full_dataset"
 
 
+##################################
+# file names
+# imu: imu_adis.csv
+# dvl: dvl_linkquest.csv
+# depth: depth_sensor.csv
+# ground truth: odometry.csv (ros msg: odometry)
+##################################
 class DataLoader:
     """Helper class to handle data reading based on the provided dataloader.py"""
 
     @staticmethod
-    def read_iekf_states(filename):
+    def read_odom(filename):
         path = os.path.join(DATA_DIR, filename)
         df = pd.read_csv(path)
         return {
-            "x": df["p_x"].values,
-            "y": df["p_y"].values,
-            "z": df["p_z"].values,
-            "u": df["v_x"].values,
-            "v": df["v_y"].values,
-            "r": df["v_z"].values,
-            "phi": df["theta_x"].values,
-            "theta": df["theta_y"].values,
-            "psi": df["theta_z"].values,
+            "time": df["%time"].values.astype(np.float64),
+            "x": df["field.pose.pose.position.x"].values.astype(np.float64),
+            "y": df["field.pose.pose.position.y"].values.astype(np.float64),
+            "z": df["field.pose.pose.position.z"].values.astype(np.float64),
+            "qx": df["field.pose.pose.orientation.x"].values.astype(np.float64),
+            "qy": df["field.pose.pose.orientation.y"].values.astype(np.float64),
+            "qz": df["field.pose.pose.orientation.z"].values.astype(np.float64),
+            "qw": df["field.pose.pose.orientation.w"].values.astype(np.float64),
         }
-
-    @staticmethod
-    def read_state_times(filename):
-        path = os.path.join(DATA_DIR, filename)
-        return pd.read_csv(path)["time"].values.astype(np.float64)
 
     @staticmethod
     def read_imu(filename):
@@ -64,3 +65,45 @@ class DataLoader:
         vz = df["field.velocityEarth2"].values.astype(np.float64)
         # Note: DVL Z is often inverted or specific to sensor mounting; adjusting based on original code
         return times, np.vstack((vx, vy, vz))
+
+
+# --- Testing Logic ---
+def run_tests():
+    print("--- Testing DataLoader ---")
+
+    # Test IMU (Note: Using _ros.csv based on your column names)
+    print("Reading IMU...")
+    # NOTE: Your code uses 'field.' prefixes, so we must use the ROS version of the CSV
+    imu = DataLoader.read_imu("imu_adis_ros.csv")
+    if imu:
+        print(f"   Success! Loaded {len(imu['time'])} IMU measurements.")
+        print(
+            f"   Accel sample: {imu['ax'][0]:.4f}, {imu['ay'][0]:.4f}, {imu['az'][0]:.4f}"
+        )
+
+    # Test Depth
+    print("Reading Depth...")
+    d_time, d_val = DataLoader.read_depth("depth_sensor.csv")
+    if d_time is not None:
+        print(f"   Success! Loaded {len(d_val)} depth measurements.")
+        print(f"   Max Depth: {np.max(d_val):.2f}m")
+
+    # Test DVL
+    print("Reading DVL...")
+    dvl_time, dvl_vel = DataLoader.read_dvl("dvl_linkquest.csv")
+    if dvl_time is not None:
+        print(f"   Success! Loaded {len(dvl_time)} DVL measurements.")
+        print(f"   Velocity Shape: {dvl_vel.shape}")
+
+    # Test Odometry
+    print("Reading Odometry...")
+    odom = DataLoader.read_odom("odometry.csv")
+    if odom is not None:
+        print(f"   Success! Loaded {len(odom['time'])} odometry measurements.")
+        print(
+            f"   Position sample: {odom['x'][0]:.2f}, {odom['y'][0]:.2f}, {odom['z'][0]:.2f}"
+        )
+
+
+if __name__ == "__main__":
+    run_tests()
