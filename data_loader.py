@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 # Configure paths
-DATA_DIR = "./full_dataset"
+# DATA_DIR = "./full_dataset"
 
 
 ##################################
@@ -18,10 +18,16 @@ class DataLoader:
     """Helper class to handle data reading based on the provided dataloader.py"""
 
     @staticmethod
+    def get_dir(DATA_DIR_PATH):
+        global DATA_DIR
+        DATA_DIR = DATA_DIR_PATH
+        print(f"Data directory set to: {DATA_DIR}")
+
+    @staticmethod
     def read_odom(filename):
         path = os.path.join(DATA_DIR, filename)
         df = pd.read_csv(path)
-        return {
+        data = {
             "time": df["%time"].values.astype(np.float64),
             "x": df["field.pose.pose.position.x"].values.astype(np.float64),
             "y": df["field.pose.pose.position.y"].values.astype(np.float64),
@@ -31,6 +37,7 @@ class DataLoader:
             "qz": df["field.pose.pose.orientation.z"].values.astype(np.float64),
             "qw": df["field.pose.pose.orientation.w"].values.astype(np.float64),
         }
+        return data
 
     @staticmethod
     def read_imu(filename):
@@ -51,20 +58,25 @@ class DataLoader:
     def read_depth(filename):
         path = os.path.join(DATA_DIR, filename)
         df = pd.read_csv(path)
-        return df["%time"].values.astype(np.float64), df["field.depth"].values.astype(
-            np.float64
-        )
+        data = {
+            "time": df["%time"].values.astype(np.float64),
+            "depth": df["field.depth"].values.astype(np.float64),
+        }
+        return data
 
     @staticmethod
     def read_dvl(filename):
         path = os.path.join(DATA_DIR, filename)
         df = pd.read_csv(path)
-        times = df["%time"].values.astype(np.float64)
-        vx = df["field.velocityEarth0"].values.astype(np.float64)
-        vy = df["field.velocityEarth1"].values.astype(np.float64)
-        vz = df["field.velocityEarth2"].values.astype(np.float64)
+        data = {
+            "time": df["%time"].values.astype(np.float64),
+            "vx": df["field.velocityEarth0"].values.astype(np.float64),
+            "vy": df["field.velocityEarth1"].values.astype(np.float64),
+            "vz": df["field.velocityEarth2"].values.astype(np.float64),
+        }
+
         # Note: DVL Z is often inverted or specific to sensor mounting; adjusting based on original code
-        return times, np.vstack((vx, vy, vz))
+        return data
 
 
 # --- Testing Logic ---
@@ -105,5 +117,5 @@ def run_tests():
         )
 
 
-if __name__ == "__main__":
-    run_tests()
+# if __name__ == "__main__":
+#     run_tests()
