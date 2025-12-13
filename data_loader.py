@@ -75,6 +75,13 @@ class DataLoader:
             "vz": df["field.velocityEarth2"].values.astype(np.float64),
         }
 
+        # remove some roll that have field.velocityInstFlag == 0 (meaning invalid data)
+        valid_indices = df["field.velocityInstFlag"] == 1
+        data["time"] = data["time"][valid_indices]
+        data["vx"] = data["vx"][valid_indices]
+        data["vy"] = data["vy"][valid_indices]
+        data["vz"] = data["vz"][valid_indices]
+
         # Note: DVL Z is often inverted or specific to sensor mounting; adjusting based on original code
         return data
 
