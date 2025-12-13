@@ -2,3 +2,4 @@ help.md
 /gtsam_env/*
 /full_dataset/*
 __pycache__/data_loader.cpython-312.pyc
+__pycache__/auv_graph_slam.cpython-312.pyc
