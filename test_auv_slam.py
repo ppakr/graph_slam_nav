@@ -13,6 +13,44 @@ from utils import plot_trajectory_fast, plot_trajectory_fast_multi, moving_avera
 from auv_graph_slam import AUVGraphSLAM
 
 
+def calculate_position_rmse(ground_truth_values, estimate_values):
+    """
+    Calculates the Position RMSE between two sets of GTSAM Values.
+    Compares the translation part of Pose3 for matching keys X(0), X(1)...
+    """
+    squared_errors = []
+    i = 0
+
+    # Iterate through all pose keys present in the results
+    while estimate_values.exists(X(i)):
+        # If ground truth doesn't have this key (shouldn't happen if initialized correctly), stop
+        if not ground_truth_values.exists(X(i)):
+            break
+
+        # Extract Pose3 objects
+        gt_pose = ground_truth_values.atPose3(X(i))
+        est_pose = estimate_values.atPose3(X(i))
+
+        # Extract Position (Translation) vectors (numpy arrays)
+        gt_pos = gt_pose.translation()
+        est_pos = est_pose.translation()
+
+        # Calculate Euclidean distance error
+        error_vector = gt_pos - est_pos
+        error_squared = np.dot(error_vector, error_vector)  # x^2 + y^2 + z^2
+        squared_errors.append(error_squared)
+
+        i += 1
+
+    if len(squared_errors) == 0:
+        print("No matching poses found to calculate RMSE.")
+        return 0.0
+
+    # RMSE = sqrt(mean(errors_squared))
+    rmse = np.sqrt(np.mean(squared_errors))
+    return rmse
+
+
 # Create main function
 def main():
     # Initialize data directory
@@ -255,6 +293,12 @@ def main():
     result_imu = gslam_imu_graph.optimize_graph(100)
     initial_imu = gslam_imu_graph.initial
 
+    # calculate and print RMSE
+    rmse_imu = calculate_position_rmse(initial_imu, result_imu)
+    print(f"=" * 30)
+    print(f"Scenario A (IMU Only) RMSE: {rmse_imu:.4f} meters")
+    print(f"=" * 30)
+
     # Plot trajectory compare initial and result
     plot_trajectory_fast_multi(
         initial_imu,
@@ -313,6 +357,13 @@ def main():
     )
     result_full = gslam_full_graph.optimize_graph(n_iterations=100)
     initial_full = gslam_full_graph.initial
+
+    # calculate and print RMSE
+    rmse_full = calculate_position_rmse(initial_full, result_full)
+    print(f"=" * 30)
+    print(f"Scenario B (Full Fusion) RMSE: {rmse_full:.4f} meters")
+    print(f"=" * 30)
+
     # Plot trajectory compare initial and result
     plot_trajectory_fast_multi(
         initial_full,
