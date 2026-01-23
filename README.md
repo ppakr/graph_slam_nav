@@ -14,7 +14,11 @@ The system fuses data from multiple sensors; IMU, DVL, and a Depth Sensor to est
 You will need **Python 3.x** and the following dependencies:
 
 ```bash
-pip install gtsam numpy pandas matplotlib scipy
+# 1. Make the script executable
+chmod +x install.sh
+
+# 2. Install dependencies
+./install.sh
 ```
 Note: If you are running on Linux and encounter a Qt platform plugin error, you may need to install the `libxcb-cursor0` library via your package manager.
 
